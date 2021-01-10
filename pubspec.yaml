@@ -1,0 +1,18 @@
+name: ami_flutter
+description: Asterisk Manager Interface (AMI) Library for Flutter.
+version: 0.0.1
+author: 129tyc
+homepage: https://github.com/129tyc/ami_flutter
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  web_socket_channel: ^1.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
