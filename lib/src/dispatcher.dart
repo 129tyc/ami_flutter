@@ -1,36 +1,11 @@
 import 'dart:async';
 
-import 'ami_io.dart';
+import 'base.dart';
 import 'structure.dart';
-
-abstract class LifeCycle {
-  void init() {}
-
-  void dispose() {}
-}
-
-abstract class AMIReader {
-  void onReadResponse(Response response);
-
-  void onReadEvent(Event event);
-
-  void onReadGreeting(String words);
-}
 
 typedef EventPredicate = bool Function(Event event);
 
-mixin CallCenter on LifeCycle implements AMIReader {
-  String get prefix;
-
-  AMIConnector _connector;
-
-  AMIConnector get connector => _connector;
-
-  set connector(AMIConnector connector) {
-    _connector = connector;
-    _connector.reader = this;
-  }
-
+mixin Dispatcher on LifeCycle, Reader {
   StreamController<Response> _responseStream;
   StreamController<Event> _eventStream;
   StreamSubscription<Event> _eventDispatcher;
@@ -42,11 +17,13 @@ mixin CallCenter on LifeCycle implements AMIReader {
   @override
   void onReadEvent(Event event) {
     _eventStream.add(event);
+    super.onReadEvent(event);
   }
 
   @override
   void onReadResponse(Response response) {
     _responseStream.add(response);
+    super.onReadResponse(response);
   }
 
   @override
@@ -65,7 +42,14 @@ mixin CallCenter on LifeCycle implements AMIReader {
 
   Stream<Event> registerEvent(String name) {
     if (!_eventListeners.containsKey(name)) {
-      _eventListeners[name] = StreamController<Event>.broadcast();
+      print('create stream for event $name');
+      final controller = StreamController<Event>.broadcast();
+      controller.onCancel = () {
+        print('event $name stream cancel, close and remove');
+        controller.close();
+        _eventListeners.remove(name);
+      };
+      _eventListeners[name] = controller;
     }
     return _eventListeners[name].stream;
   }
@@ -78,8 +62,7 @@ mixin CallCenter on LifeCycle implements AMIReader {
     final completer = Completer<List<Event>>();
     final res = <Event>[];
 
-    final listener =
-        registerEvent(name).listen((e) => res.add(e), cancelOnError: true);
+    final listener = registerEvent(name).listen((e) => res.add(e), cancelOnError: true);
     readEvent(eventPredicate).then((value) {
       listener.cancel();
       completer.complete(res);
@@ -87,21 +70,15 @@ mixin CallCenter on LifeCycle implements AMIReader {
     return completer.future;
   }
 
-  Stream<Response> _registerResponse(String actionID) {
+  Stream<Response> registerResponse(String actionID) {
     if (!_respListeners.containsKey(actionID)) {
       _respListeners[actionID] = StreamController<Response>.broadcast();
     }
     return _respListeners[actionID].stream;
   }
 
-  Future<void> connect(String host, int port, {dynamic args}) {
-    return connector.connect(host, port, args: args);
-  }
-
   @override
   void dispose() {
-    connector.dispose();
-
     _eventDispatcher?.cancel();
     _respDispatcher?.cancel();
     _eventListeners.forEach((_, value) => value?.close());
@@ -109,27 +86,5 @@ mixin CallCenter on LifeCycle implements AMIReader {
     _respListeners.forEach((_, value) => value?.close());
     _respListeners.clear();
     super.dispose();
-  }
-
-  Future<Response> sendAction(
-    String name, {
-    String id,
-    Map<String, String> args,
-  }) async {
-    if (!connector.available()) {
-      return null;
-    }
-
-    id ??= '${prefix}_${DateTime.now().millisecondsSinceEpoch}';
-
-    print('send action $name id $id');
-
-    final data = <String, String>{'Action': name, 'ActionID': id}
-      ..addAll(args ?? {});
-    // print('send action payload $data');
-
-    connector.send(data);
-
-    return _registerResponse(id).first;
   }
 }

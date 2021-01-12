@@ -8,6 +8,7 @@ Asterisk Manager Interface (AMI) Library for Flutter
 - support Android,iOS,Desktop and Web.
 - support listen events from stream.
 - support async/await for ami events.
+- functions organized by module, developers can combine them for other purpose.
 - easy to develop new actions or connection methods.
 
 ## Installation
@@ -15,14 +16,16 @@ Asterisk Manager Interface (AMI) Library for Flutter
 just add dependency into `pubspec.yaml`:
 
 ```yaml
-ami_flutter: ^0.0.1
+ami_flutter: ^0.0.2
 ```
 
 ## Usage
 
-1. initialize `Manager` and connect(use `WebSocketConnector` at web platform):
+1. initialize derived classes of `BaseManager` (e.g. `DefaultManager` for TCP Socket or `WebSocketManager` for WebSocket at web platform) and connect:
  ```dart
-final manager = Manager(connector: TCPSocketConnector());
+final manager = DefaultManager();
+// web platform need set prefix for send actions, like this: manager.prefix = 'prefix';
+manager.init();
 await manager.connect('127.0.0.1', 5038);
 ```
 
@@ -73,4 +76,7 @@ manager.dispose();
 
 AMI only support TCP socket. If you need use the library at web platform:
  - Install and configure  [amiws](https://github.com/staskobzar/amiws). 
- - Use `WebSocketConnector` to connect web socket proxy by `amiws`
+ - Use `WebSocketManager` to connect web socket proxy by `amiws`
+ 
+BTW. You can use function `selectByPlatform` to auto select the proper manager according to
+your platform.

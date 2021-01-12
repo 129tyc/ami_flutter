@@ -1,6 +1,6 @@
 name: ami_flutter
 description: Asterisk Manager Interface (AMI) Library for Flutter.
-version: 0.0.1
+version: 0.0.2
 author: 129tyc
 homepage: https://github.com/129tyc/ami_flutter
 

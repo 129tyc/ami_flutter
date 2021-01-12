@@ -1,7 +1,9 @@
-import 'constants.dart';
+import 'package:flutter/foundation.dart';
 
-bool isGreetingLines(List<String> data) =>
-    data.length == 1 && isGreeting(data[0]);
+import 'constants.dart';
+import 'managers.dart';
+
+bool isGreetingLines(List<String> data) => data.length == 1 && isGreeting(data[0]);
 
 bool isGreeting(String data) => data.contains('/') && !data.contains(':');
 
@@ -42,5 +44,13 @@ MessageType strToEnum(String str) {
       break;
     default:
       return MessageType.unknown;
+  }
+}
+
+T selectByPlatform<T extends BaseManager>() {
+  if (kIsWeb) {
+    return WebSocketManager() as T;
+  } else {
+    return DefaultManager() as T;
   }
 }
