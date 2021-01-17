@@ -62,7 +62,8 @@ mixin Dispatcher on LifeCycle, Reader {
     final completer = Completer<List<Event>>();
     final res = <Event>[];
 
-    final listener = registerEvent(name).listen((e) => res.add(e), cancelOnError: true);
+    final listener =
+        registerEvent(name).listen((e) => res.add(e), cancelOnError: true);
     readEvent(eventPredicate).then((value) {
       listener.cancel();
       completer.complete(res);

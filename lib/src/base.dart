@@ -45,7 +45,8 @@ mixin Sender on Connector, Dispatcher {
 
     print('send action $name id $id');
 
-    final data = <String, String>{'Action': name, 'ActionID': id}..addAll(args ?? {});
+    final data = <String, String>{'Action': name, 'ActionID': id}
+      ..addAll(args ?? {});
     // print('send action payload $data');
 
     send(data);
