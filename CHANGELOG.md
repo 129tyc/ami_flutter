@@ -8,3 +8,8 @@
 - modify the initialization of manager.
 - add some unit test.
 - update README.md
+
+## [0.0.3] - 2021/1/17
+
+- migrate to dart package, removed flutter dependencies.
+- format code.
