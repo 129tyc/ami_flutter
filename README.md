@@ -1,4 +1,8 @@
 # ami_flutter
+
+![](https://img.shields.io/pub/v/ami_flutter)
+![](https://img.shields.io/github/stars/129tyc/ami_flutter?style=social)
+
 Asterisk Manager Interface (AMI) Library for Flutter
 
 ---
