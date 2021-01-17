@@ -1,6 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
-
 import 'package:ami_flutter/ami_flutter.dart';
+import 'package:test/test.dart';
 
 void main() async {
   TestManager manager;
@@ -19,10 +18,10 @@ void main() async {
   });
 
   test('test mock greeting', () {
-    manager.title.then(expectAsync1((value){
+    manager.title.then(expectAsync1((value) {
       expect(value, 'TestTitle');
     }));
-    manager.version.then(expectAsync1((value){
+    manager.version.then(expectAsync1((value) {
       expect(value, 'TestVersion');
     }));
     manager.mockMessages.add('TestTitle/TestVersion');

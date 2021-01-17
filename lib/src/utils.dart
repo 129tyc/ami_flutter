@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 import 'constants.dart';
 import 'managers.dart';
 
@@ -47,8 +45,8 @@ MessageType strToEnum(String str) {
   }
 }
 
-T selectByPlatform<T extends BaseManager>() {
-  if (kIsWeb) {
+T selectByPlatform<T extends BaseManager>(bool isWeb) {
+  if (isWeb) {
     return WebSocketManager() as T;
   } else {
     return DefaultManager() as T;
