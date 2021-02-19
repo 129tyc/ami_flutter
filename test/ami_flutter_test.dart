@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ami_flutter/ami_flutter.dart';
 import 'package:test/test.dart';
 
@@ -29,14 +31,16 @@ void main() async {
   });
 
   test('test mock send resp', () async {
-    manager.mockMessages
-        .add(BaseMessage.fromJson(MessageType.response, {'Response': 'Success', 'ActionID': 'testActionID'}));
-    final res = await manager.sendAction('DongleShowDevices', id: 'testActionID');
+    manager.mockMessages.add(BaseMessage.fromJson(MessageType.response,
+        {'Response': 'Success', 'ActionID': 'testActionID'}));
+    final res =
+        await manager.sendAction('DongleShowDevices', id: 'testActionID');
     expect(res.succeed, true);
   });
 
   test('test mock listen event', () async {
-    manager.mockMessages.add(BaseMessage.fromJson(MessageType.event, {'Event': 'testEvent'}));
+    manager.mockMessages
+        .add(BaseMessage.fromJson(MessageType.event, {'Event': 'testEvent'}));
 
     final listener = manager.registerEvent('testEvent').listen(null);
     final callback = (Event event) {
@@ -48,7 +52,8 @@ void main() async {
   });
 
   test('test mock read event', () async {
-    manager.mockMessages.add(BaseMessage.fromJson(MessageType.event, {'Event': 'testEvent'}));
+    manager.mockMessages
+        .add(BaseMessage.fromJson(MessageType.event, {'Event': 'testEvent'}));
 
     manager.handleMessage(null);
     final event = await manager.readEvent('testEvent');
@@ -56,13 +61,57 @@ void main() async {
   });
 
   test('test mock read all events', () async {
-    manager.mockMessages.add(BaseMessage.fromJson(MessageType.event, {'Event': 'testEvent'}));
-    manager.mockMessages.add(BaseMessage.fromJson(MessageType.event, {'Event': 'testEvent'}));
-    manager.mockMessages.add(BaseMessage.fromJson(MessageType.event, {'Event': 'testEvent1'}));
+    manager.mockMessages
+        .add(BaseMessage.fromJson(MessageType.event, {'Event': 'testEvent'}));
+    manager.mockMessages
+        .add(BaseMessage.fromJson(MessageType.event, {'Event': 'testEvent'}));
+    manager.mockMessages
+        .add(BaseMessage.fromJson(MessageType.event, {'Event': 'testEvent1'}));
 
     manager.handleMessage(null);
     final events = await manager.readAllEventsUntil('testEvent', 'testEvent1');
     expect(events.length, 2);
+  });
+
+  test('test mock connect status', () async {
+    manager.statusStream.first
+        .then(expectAsync1((value) => expect(value, false)));
+    manager.disconnect();
+    manager.statusStream.listen(expectAsync1((event) => null, count: 2));
+    await manager.connect('test', 123);
+    manager.disconnect();
+  });
+
+  test('test mock send no timeout', () async {
+    var ret = null;
+    manager.mockMessages.add(BaseMessage.fromJson(MessageType.response,
+        {'Response': 'Success', 'ActionID': 'testActionID'}));
+    manager.delay = Duration(milliseconds: 200);
+    manager
+        .sendAction(
+          'testAction',
+          id: 'testActionID',
+          timeout: Duration(milliseconds: 500),
+        )
+        .then((value) => ret = value);
+    await Future.delayed(const Duration(milliseconds: 500));
+    expect(ret == null, false);
+  });
+
+  test('test mock send timeout', () async {
+    var ret = null;
+    manager.mockMessages.add(BaseMessage.fromJson(MessageType.response,
+        {'Response': 'Success', 'ActionID': 'testActionID'}));
+    manager.delay = Duration(milliseconds: 200);
+    manager
+        .sendAction(
+          'testAction',
+          id: 'testActionID',
+          timeout: Duration(milliseconds: 150),
+        )
+        .then((value) => ret = value);
+    await Future.delayed(const Duration(milliseconds: 500));
+    expect(ret == null, true);
   });
 /*
   test('test web socket', () async {
@@ -135,21 +184,48 @@ mixin MockParser on Reader implements Parser {
   }
 }
 
-mixin MockConnector on Parser implements Connector {
+mixin MockConnector on Parser, LifeCycle implements Connector {
+  bool _available = false;
+
+  StreamController _controller;
+
+  Duration delay;
+
+  @override
+  void init() {
+    _controller = StreamController.broadcast();
+    super.init();
+  }
+
+  @override
+  Stream get statusStream => _controller.stream;
+
+  @override
+  void disconnect() {
+    _available = false;
+    _controller.add(false);
+  }
+
   @override
   bool available() {
-    return true;
+    return _available;
   }
 
   @override
   Future<void> connect(String host, int port, {args}) {
     print('mock connect $host $port $args');
+    _controller.add(true);
+    _available = true;
     return Future.value(null);
   }
 
   @override
   void send(Map<String, String> data) {
     print('send mock data $data');
-    handleMessage(null);
+    if (delay != null) {
+      Future.delayed(delay, () => handleMessage(null));
+    } else {
+      handleMessage(null);
+    }
   }
 }

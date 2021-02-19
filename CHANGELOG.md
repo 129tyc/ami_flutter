@@ -13,3 +13,8 @@
 
 - migrate to dart package, removed flutter dependencies.
 - format code.
+
+## [0.0.4] - 2021/2/20
+
+- provide stream to listen connect status.
+- function `sendAction` provide parameter `timeout` to finish response reading.

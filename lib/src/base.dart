@@ -18,7 +18,11 @@ mixin Reader {
 }
 
 mixin Connector {
+  Stream get statusStream;
+
   Future<void> connect(String host, int port, {dynamic args});
+
+  void disconnect();
 
   void send(Map<String, String> data);
 
@@ -36,6 +40,7 @@ mixin Sender on Connector, Dispatcher {
     String name, {
     String id,
     Map<String, String> args,
+    Duration timeout,
   }) async {
     if (!available()) {
       return null;
@@ -51,6 +56,12 @@ mixin Sender on Connector, Dispatcher {
 
     send(data);
 
-    return registerResponse(id).first;
+    if (timeout == null) {
+      return registerResponse(id).first;
+    } else {
+      return registerResponse(id)
+          .timeout(timeout, onTimeout: (sink) => sink.add(null))
+          .first;
+    }
   }
 }
